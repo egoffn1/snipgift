@@ -12,7 +12,7 @@ from db import repo
 from markets.aggregator import create_clients
 from markets.base import GiftListing
 from utils.logger import get_logger
-from utils.urls import parse_gift_url
+from utils.urls import parse_gift_url, friendly_name, TELEGRAM_MARKET
 
 logger = get_logger("bot.start")
 
@@ -41,8 +41,9 @@ async def _send_welcome(message: Message) -> None:
         "Telegram-подарков (NFT Gifts на TON).\n\n"
         "Просто **скинь мне ссылку на подарок** — и я начну "
         "отслеживать похожие.\n\n"
-        "Например:\n"
-        "`https://tonnel.network/gift/12345`",
+        "Работают:\n"
+        "• ссылки с маркетов — `tonnel.network/gift/12345`\n"
+        "• ссылки из Telegram — `t.me/nft/WinterWreath-2868`",
         parse_mode="Markdown",
         reply_markup=main_menu_kb(),
     )
@@ -79,6 +80,8 @@ def _client_for(market: str, http: aiohttp.ClientSession):
 
 
 async def _resolve_name(market: str, gift_id: str, hint: str) -> str | None:
+    if market == TELEGRAM_MARKET:
+        return friendly_name(hint) or None
     if hint and hint.lower() in {"tonnel", "fragment", "mrkt", "portals"}:
         hint = ""
     try:
@@ -97,8 +100,9 @@ async def _handle_gift_url(message: Message, url: str) -> None:
     parsed = parse_gift_url(url)
     if not parsed:
         await message.answer(
-            "⚠️ Не узнал ссылку. Отправь ссылку на подарок с одного из рынков:\n"
-            "`tonnel.network`, `tgmrkt.io`, `portals.to`, `fragment.com`",
+            "⚠️ Не узнал ссылку. Отправь ссылку на подарок:\n"
+            "• ссылка с маркета (`tonnel.network`, `tgmrkt.io`, `portals.to`, `fragment.com`)\n"
+            "• ссылка из Telegram (`t.me/nft/WinterWreath-2868`)",
             parse_mode="Markdown",
         )
         return
@@ -207,8 +211,8 @@ async def on_unknown_text(message: Message) -> None:
     if not message.text:
         return
     await message.answer(
-        "Не понял 😅 Отправь мне ссылку на подарок — например "
-        "`https://tonnel.network/gift/12345`",
+        "Не понял 😅 Отправь ссылку на подарок — с маркета или из Telegram:\n"
+        "`https://tonnel.network/gift/12345` или `https://t.me/nft/Heart-123`",
         parse_mode="Markdown",
         reply_markup=main_menu_kb(),
     )
