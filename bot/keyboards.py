@@ -42,6 +42,12 @@ def _build_sell_kb(
         )
     buttons.append([
         InlineKeyboardButton(
+            text="🖌 Модель/Фон/Узор/ID",
+            callback_data="cfg:attrs",
+        ),
+    ])
+    buttons.append([
+        InlineKeyboardButton(
             text=f"💰 Прибыль {profit:.0f}% −",
             callback_data=f"cfg:profit:{max(profit - 1, 0):.0f}",
         ),
@@ -53,6 +59,55 @@ def _build_sell_kb(
     btn = "▶ Продолжить" if paused else "⏸ Пауза"
     buttons.append([InlineKeyboardButton(text=btn, callback_data="cfg:pause")])
     buttons.append([InlineKeyboardButton(text="✅ Готово", callback_data="cfg:done")])
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+def _build_attrs_kb(
+    models: list[str],
+    backdrops: list[str],
+    patterns: list[str],
+    model: str | None,
+    backdrop: str | None,
+    pattern: str | None,
+    beautiful_id: bool,
+) -> InlineKeyboardMarkup:
+    buttons: list[list[InlineKeyboardButton]] = []
+
+    def group_row(
+        label: str, current: str | None, left_cb: str, right_cb: str
+    ) -> list[InlineKeyboardButton]:
+        cur = current or "Любая"
+        return [
+            InlineKeyboardButton(text=label, callback_data="cfg:noop"),
+            InlineKeyboardButton(text="‹", callback_data=left_cb),
+            InlineKeyboardButton(text=cur, callback_data="cfg:noop"),
+            InlineKeyboardButton(text="›", callback_data=right_cb),
+        ]
+
+    buttons.append(
+        group_row("🖌 Модель", model, "cfg:attr:model:l", "cfg:attr:model:r")
+    )
+    buttons.append(
+        group_row("🎨 Фон", backdrop, "cfg:attr:backdrop:l", "cfg:attr:backdrop:r")
+    )
+    buttons.append(
+        group_row("🧩 Узор", pattern, "cfg:attr:pattern:l", "cfg:attr:pattern:r")
+    )
+    buttons.append([
+        InlineKeyboardButton(text="🔢 Красивый ID", callback_data="cfg:noop"),
+        InlineKeyboardButton(
+            text="✅Вкл" if beautiful_id else "Вкл",
+            callback_data="cfg:attr:id:yes",
+        ),
+        InlineKeyboardButton(
+            text="✅Выкл" if not beautiful_id else "Выкл",
+            callback_data="cfg:attr:id:no",
+        ),
+    ])
+    buttons.append([
+        InlineKeyboardButton(text="🔙 Назад", callback_data="cfg:attrs:back"),
+        InlineKeyboardButton(text="✅ Готово", callback_data="cfg:done"),
+    ])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 

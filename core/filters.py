@@ -20,25 +20,23 @@ def passes_price_filter(
     return True
 
 
+def _attr_matches(listing_value: str, expected: str | None) -> bool:
+    if not expected or expected.lower() in ("any", "любой"):
+        return True
+    return (listing_value or "").strip().lower() == expected.lower()
+
+
 def passes_attribute_filter(
     listing: GiftListing,
     model: str | None = None,
     backdrop: str | None = None,
     pattern: str | None = None,
 ) -> bool:
-    if model:
-        if listing.model and listing.model.lower() != model.lower():
-            if model.lower() not in ("any", "любой", ""):
-                return False
-    if backdrop:
-        if listing.backdrop and listing.backdrop.lower() != backdrop.lower():
-            if backdrop.lower() not in ("any", "любой", ""):
-                return False
-    if pattern:
-        if listing.pattern and listing.pattern.lower() != pattern.lower():
-            if pattern.lower() not in ("any", "любой", ""):
-                return False
-    return True
+    return (
+        _attr_matches(listing.model, model)
+        and _attr_matches(listing.backdrop, backdrop)
+        and _attr_matches(listing.pattern, pattern)
+    )
 
 
 def passes_beautiful_id_filter(
