@@ -102,6 +102,17 @@ class MrktClient(MarketClient):
             listing.is_auction = True
         return listings
 
+    async def get_gift_by_id(self, gift_id: str) -> GiftListing | None:
+        try:
+            listings = await self.search_gifts(limit=300)
+        except Exception as exc:
+            logger.debug("MRKT get_gift_by_id search failed: %s", exc)
+            return None
+        for listing in listings:
+            if listing.id == gift_id:
+                return listing
+        return None
+
     @staticmethod
     def _parse_payload(payload: Any) -> list[GiftListing]:
         if not isinstance(payload, dict):

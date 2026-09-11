@@ -68,6 +68,53 @@ async def get_settings_for_user(session, user_id: int) -> UserSettings | None:
     return result.scalars().first()
 
 
+async def upsert_track_settings(
+    session,
+    user_id: int,
+    gift_name: str,
+    *,
+    model: str | None = None,
+    backdrop: str | None = None,
+    pattern: str | None = None,
+) -> UserSettings:
+    result = await session.execute(
+        select(UserSettings).where(
+            UserSettings.user_id == user_id,
+            UserSettings.gift_name == gift_name,
+        )
+    )
+    existing = result.scalars().first()
+    if existing:
+        existing.model = model if model is not None else existing.model
+        existing.backdrop = (
+            backdrop if backdrop is not None else existing.backdrop
+        )
+        existing.pattern = pattern if pattern is not None else existing.pattern
+        existing.paused = False
+        await session.commit()
+        await session.refresh(existing)
+        return existing
+
+    settings_obj = UserSettings(
+        user_id=user_id,
+        gift_name=gift_name,
+        model=model,
+        backdrop=backdrop,
+        pattern=pattern,
+        min_price=0.0,
+        max_price=None,
+        min_profit_pct=5.0,
+        beautiful_id_only=False,
+        buy_markets=["tonnel", "mrkt"],
+        sell_markets=["tonnel", "mrkt"],
+        floor_markets=[],
+        auctions_enabled=False,
+        max_auction_bid=None,
+        scan_interval=7,
+    )
+    return await save_settings(session, settings_obj)
+
+
 async def get_all_settings(session) -> list[UserSettings]:
     result = await session.execute(
         select(UserSettings, User)

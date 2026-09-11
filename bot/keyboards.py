@@ -1,4 +1,9 @@
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types import (
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
+    KeyboardButton,
+    ReplyKeyboardMarkup,
+)
 
 MARKET_LABELS = {
     "tonnel": "Tonnel",
@@ -7,105 +12,65 @@ MARKET_LABELS = {
     "fragment": "Fragment",
 }
 
-TOP_MODELS = ["Model 1", "Model 2", "Model 3", "Model 4", "Model 5"]
-TOP_BACKDROPS = ["Backdrop 1", "Backdrop 2", "Backdrop 3", "Backdrop 4", "Backdrop 5"]
-TOP_PATTERNS = ["Pattern 1", "Pattern 2", "Pattern 3", "Pattern 4", "Pattern 5"]
 
-
-def main_menu() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text="🔍 Настроить поиск", callback_data="menu:settings")],
-            [InlineKeyboardButton(text="📊 Мои алерты", callback_data="menu:alerts")],
+def main_menu_kb() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="🔍 Настроить поиск")],
+            [KeyboardButton(text="📊 Мои алерты")],
             [
-                InlineKeyboardButton(text="▶️ Activer scan", callback_data="menu:resume"),
-                InlineKeyboardButton(text="⏸️ Pause", callback_data="menu:pause"),
+                KeyboardButton(text="▶️ Продолжить"),
+                KeyboardButton(text="⏸️ Пауза"),
             ],
-            [InlineKeyboardButton(text="ℹ️ Помощь", callback_data="menu:help")],
-        ]
+            [KeyboardButton(text="ℹ️ Помощь")],
+        ],
+        resize_keyboard=True,
     )
 
 
-def market_checkboxes(
-    selected: list[str],
-    action_prefix: str,
+def _build_sell_kb(
+    sell: list[str], profit: float, paused: bool
 ) -> InlineKeyboardMarkup:
-    buttons = []
+    buttons: list[list[InlineKeyboardButton]] = []
     for name, label in MARKET_LABELS.items():
-        check = "☑️" if name in selected else "⬜"
+        check = "☑" if name in sell else "☐"
         buttons.append(
-            [
-                InlineKeyboardButton(
-                    text=f"{check} {label}",
-                    callback_data=f"{action_prefix}:{name}",
-                )
-            ]
+            [InlineKeyboardButton(
+                text=f"{check} {label}",
+                callback_data=f"cfg:sell:{name}",
+            )]
         )
-    buttons.append(
-        [
-            InlineKeyboardButton(
-                text="✅ Valider",
-                callback_data=f"{action_prefix}:done",
-            )
-        ]
-    )
+    buttons.append([
+        InlineKeyboardButton(
+            text=f"💰 Прибыль {profit:.0f}% −",
+            callback_data=f"cfg:profit:{max(profit - 1, 0):.0f}",
+        ),
+        InlineKeyboardButton(
+            text=f"+ 💰 Прибыль {profit:.0f}%",
+            callback_data=f"cfg:profit:{profit + 1:.0f}",
+        ),
+    ])
+    btn = "▶ Продолжить" if paused else "⏸ Пауза"
+    buttons.append([InlineKeyboardButton(text=btn, callback_data="cfg:pause")])
+    buttons.append([InlineKeyboardButton(text="✅ Готово", callback_data="cfg:done")])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
-def floor_market_choice() -> InlineKeyboardMarkup:
+def track_confirm_kb() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="🌍 Tous les marchés", callback_data="floor:all")],
-            [InlineKeyboardButton(text="✍️ Choisir manuellement", callback_data="floor:manual")],
+            [InlineKeyboardButton(text="⚙️ Настроить алерт", callback_data="cfg:open")],
+            [InlineKeyboardButton(text="✅ Всё ок", callback_data="cfg:done")],
         ]
     )
 
 
-def attr_options(action_prefix: str) -> InlineKeyboardMarkup:
+def yes_no(prefix: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(
-                    text="Не важно (любой)",
-                    callback_data=f"{action_prefix}:any",
-                )
-            ],
-            [
-                InlineKeyboardButton(
-                    text="✍️ Ввести вручную",
-                    callback_data=f"{action_prefix}:manual",
-                )
-            ],
-        ]
-    )
-
-
-def yes_no(action_prefix: str) -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(text="✅ Да", callback_data=f"{action_prefix}:yes"),
-                InlineKeyboardButton(text="❌ Нет", callback_data=f"{action_prefix}:no"),
+                InlineKeyboardButton(text="✅ Да", callback_data=f"{prefix}:yes"),
+                InlineKeyboardButton(text="❌ Нет", callback_data=f"{prefix}:no"),
             ]
-        ]
-    )
-
-
-def auctions_menu() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(text="✅ Аукционы вкл", callback_data="auction:on"),
-                InlineKeyboardButton(text="❌ Аукционы выкл", callback_data="auction:off"),
-            ]
-        ]
-    )
-
-
-def settings_saved() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text="📋 Мои настройки", callback_data="menu:show_settings")],
-            [InlineKeyboardButton(text="🏠 Главное меню", callback_data="menu:main")],
         ]
     )

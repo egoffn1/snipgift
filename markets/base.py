@@ -82,5 +82,8 @@ class MarketClient(ABC):
     ) -> list[GiftListing]:
         return []
 
+    async def get_gift_by_id(self, gift_id: str) -> GiftListing | None:
+        return None
+
     async def healthcheck(self) -> bool:
         return False
